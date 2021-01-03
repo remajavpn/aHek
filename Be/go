@@ -1,0 +1,97 @@
+#!/bin/bash
+#script by jiraphat yuenying for debian9
+
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root" 
+   exit 1
+fi
+
+#install openvpn
+
+apt-get purge openvpn easy-rsa -y;
+apt-get purge squid -y;
+apt-get purge ufw -y;
+apt-get update
+MYIP=$(wget -qO- ipv4.icanhazip.com);
+MYIP2="s/xxxxxxxxx/$MYIP/g";
+
+apt-get update
+apt-get install bc -y
+apt-get -y install openvpn easy-rsa;
+apt-get -y install python;
+
+wget -O /etc/openvpn/openvpn.tar "https://raw.githubusercontent.com/remajavpn/aHek/main/Be/openvpn.tar"
+wget -O /etc/openvpn/default.tar "https://gakod.com/script/thai/default.tar"
+cd /etc/openvpn/
+tar xf openvpn.tar
+tar xf default.tar
+cp sysctl.conf /etc/
+cp before.rules /etc/ufw/
+cp ufw /etc/default/
+rm sysctl.conf
+rm before.rules
+rm ufw
+systemctl restart openvpn
+
+#install squid3
+
+apt-get -y install squid;
+cp /etc/squid/squid.conf /etc/squid3/squid.conf.bak
+wget -O /etc/squid/squid.conf "https://gakod.com/script/thai/squid.conf"
+sed -i $MYIP2 /etc/squid/squid.conf;
+systemctl restart squid
+
+cd /etc/openvpn/
+wget -O /etc/openvpn/client.ovpn "https://gakod.com/script/thai/443/client.ovpn"
+sed -i $MYIP2 /etc/openvpn/client.ovpn;
+cp client.ovpn /root/
+
+#N | apt-get install ufw
+ufw allow ssh
+ufw allow 1194/tcp
+ufw allow 8080/tcp
+ufw allow 3128/tcp
+ufw allow 80/tcp
+yes | sudo ufw enable
+
+# Configure Nginx
+sed -i 's/\/var\/www\/html;/\/home\/vps\/public_html\/;/g' /etc/nginx/sites-enabled/default
+cp /var/www/html/index.nginx-debian.html /home/vps/public_html/index.html
+
+
+# download script
+cd /usr/bin
+wget -O member "https://gakod.com/script/thai/member.sh"
+wget -O menu "https://gakod.com/script/thai/menu.sh"
+wget -O usernew "https://gakod.com/script/thai/usernew.sh"
+wget -O speedtest "https://gakod.com/script/thai/speedtest_cli.py"
+wget -O userd "https://gakod.com/script/thai/deluser.sh"
+wget -O trial "https://gakod.com/script/thai/trial.sh"
+echo "0 0 * * * root /usr/bin/reboot" > /etc/cron.d/reboot
+#echo "* * * * * service dropbear restart" > /etc/cron.d/dropbear
+chmod +x member
+chmod +x menu
+chmod +x usernew
+chmod +x speedtest
+chmod +x userd
+chmod +x trial
+clear
+
+printf '###############################\n'
+printf '# Script by Ã Â¸Â­Ã Â¸Â´Ã Â¸â€žÃ Â¸â€žÃ Â¸Â´Ã Â¸Â§Ã Â¸â€¹Ã Â¸Â±Ã Â¸â€¡ #\n'
+printf '#                             #\n'
+
+printf '#                             #\n'
+printf '#    Ã Â¸Å¾Ã Â¸Â´Ã Â¸Â¡Ã Â¸Å¾Ã Â¹Å’ menu Ã Â¹â‚¬Ã Â¸Å¾Ã Â¸Â·Ã Â¹Ë†Ã Â¸Â­Ã Â¹Æ’Ã Â¸Å Ã Â¹â€°Ã Â¸â€žÃ Â¸Â³Ã Â¸ÂªÃ Â¸Â±Ã Â¹Ë†Ã Â¸â€¡Ã Â¸â€¢Ã Â¹Ë†Ã Â¸Â²Ã Â¸â€¡Ã Â¹â€    #\n'
+printf '###############################\n\n'
+echo -e "Ã Â¸â€Ã Â¸Â²Ã Â¸Â§Ã Â¸â„¢Ã Â¹Å’Ã Â¹â€šÃ Â¸Â«Ã Â¸Â¥Ã Â¸â€Ã Â¹â€žÃ Â¸Å¸Ã Â¸Â¥Ã Â¹Å’  : /root/client.ovpn\n\n"
+printf '\n\nÃ Â¹â‚¬Ã Â¸Å¾Ã Â¸Â´Ã Â¹Ë†Ã Â¸Â¡ user Ã Â¹â€šÃ Â¸â€Ã Â¸Â¢Ã Â¹Æ’Ã Â¸Å Ã Â¹â€°Ã Â¸â€žÃ Â¸Â³Ã Â¸ÂªÃ Â¸Â±Ã Â¹Ë†Ã Â¸â€¡ useradd'
+printf '\n\nÃ Â¸â€¢Ã Â¸Â±Ã Â¹â€°Ã Â¸â€¡Ã Â¸Â£Ã Â¸Â«Ã Â¸Â±Ã Â¸ÂªÃ Â¹â€šÃ Â¸â€Ã Â¸Â¢ Ã Â¹Æ’Ã Â¸Å Ã Â¹â€°Ã Â¸â€žÃ Â¸Â³Ã Â¸ÂªÃ Â¸Â±Ã Â¹Ë†Ã Â¸â€¡ passwd'
+printf '\n\nÃ Â¸â€žÃ Â¸Â¸Ã Â¸â€œÃ Â¸Ë†Ã Â¸Â³Ã Â¹â‚¬Ã Â¸â€ºÃ Â¹â€¡Ã Â¸â„¢Ã Â¸â€¢Ã Â¹â€°Ã Â¸Â­Ã Â¸â€¡Ã Â¸Â£Ã Â¸ÂµÃ Â¸ÂªÃ Â¸â€¢Ã Â¸Â²Ã Â¸Â£Ã Â¹Å’Ã Â¸â€”Ã Â¸Â£Ã Â¸Â°Ã Â¸Å¡Ã Â¸Å¡Ã Â¸Â«Ã Â¸â„¢Ã Â¸Â¶Ã Â¹Ë†Ã Â¸â€¡Ã Â¸Â£Ã Â¸Â­Ã Â¸Å¡ (y/n):'
+read a
+if [ $a == 'y' ]
+then
+reboot
+else
+exit
+fi
